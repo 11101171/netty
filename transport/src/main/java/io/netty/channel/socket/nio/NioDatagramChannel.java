@@ -595,4 +595,11 @@ public final class NioDatagramChannel
     void clearReadPending0() {
         clearReadPending();
     }
+
+    @Override
+    protected boolean closeOnReadError(Throwable cause) {
+        // We not want to close on SocketException when using DatagramChannel as we usually can continue receiving.
+        // See https://github.com/netty/netty/issues/5893
+        return !(cause instanceof SocketException);
+    }
 }

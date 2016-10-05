@@ -97,11 +97,7 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                 pipeline.fireChannelReadComplete();
 
                 if (exception != null) {
-                    if (exception instanceof IOException && !(exception instanceof PortUnreachableException)) {
-                        // ServerChannel should not be closed even on IOException because it can often continue
-                        // accepting incoming connections. (e.g. too many open files)
-                        closed = !(AbstractNioMessageChannel.this instanceof ServerChannel);
-                    }
+                    closed = closeOnReadError(exception);
 
                     pipeline.fireExceptionCaught(exception);
                 }
@@ -172,6 +168,15 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
      * Returns {@code true} if we should continue the write loop on a write error.
      */
     protected boolean continueOnWriteError() {
+        return false;
+    }
+
+    protected boolean closeOnReadError(Throwable cause) {
+        if (cause instanceof IOException && !(cause instanceof PortUnreachableException)) {
+            // ServerChannel should not be closed even on IOException because it can often continue
+            // accepting incoming connections. (e.g. too many open files)
+            return this instanceof ServerChannel;
+        }
         return false;
     }
 
